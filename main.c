@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// kmean function prototype
+void kmean(double** matrix, int Kcluster,)
+
 double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
