@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// kmean function prototype
-void kmean(double** matrix, int Kcluster,)
+#include <time.h>
 
 double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
     FILE* file = fopen(filename, "r");
@@ -77,6 +75,36 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
     return matrix; 
 }
 
+void selectRandomPoints(double** data, int rows, int cols, int k) {
+    srand(time(0));  // Initialize random seed
+
+    // Array to keep track of selected indices (avoid selecting the same point twice)
+    int* selected = (int*)calloc(k, sizeof(int));
+
+    for (int i = 0; i < k; i++) {
+        int randomIndex;
+
+        // Ensure that the selected index is unique
+        do {
+            randomIndex = rand() % rows;  // Generate a random index within the number of rows
+        } while (selected[randomIndex] == 1);  // Check if already selected
+
+        selected[randomIndex] = 1;  // Mark the index as selected
+
+        // Print the randomly selected data point
+        printf("Selected point %d: (", randomIndex);
+        for (int j = 0; j < cols; j++) {
+            printf("%lf", data[randomIndex][j]);
+            if (j < cols - 1) {
+                printf(", ");
+            }
+        }
+        printf(")\n");
+    }
+
+    free(selected);  // Free the dynamically allocated memory
+}
+
 void freeMatrix(double** matrix, int rows) {
     for (int i = 0; i < rows; i++) {
         free(matrix[i]);
@@ -87,11 +115,12 @@ void freeMatrix(double** matrix, int rows) {
 int main(){
     int rows, cols, k;
     
-    // double** matrix = readMatrixFromFile("kmeans-data.txt", &rows, &cols);
+    double** matrix = readMatrixFromFile("kmeans-data.txt", &rows, &cols);
 
     printf("provide number of clusters :");
     scanf("%d", &k);
-    printf("%d \n", k);
+
+    selectRandomPoints(matrix, rows, cols, k);
 
     freeMatrix(matrix, rows);
 
