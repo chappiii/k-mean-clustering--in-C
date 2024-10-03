@@ -171,8 +171,12 @@ double euclideanDistance(double* point, double* centroid, int cols) {
 }
 
 // Function to assign data points to the nearest centroid
-void assignClusters(double** data, double** centroids, int* assignments, int rows, int cols, int k) {
-    for (int i = 0; i < rows; i++) {  // Loop over each data point
+double*** assignClusters(double** data, double** centroids, int* assignments, int rows, int cols, int k, int** clusterSizes) {
+    // Initialize cluster sizes to 0
+    *clusterSizes = (int*)calloc(k, sizeof(int));
+
+    // Step 1: Assign each point to the nearest centroid
+    for (int i = 0; i < rows; i++) {
         double minDistance = euclideanDistance(data[i], centroids[0], cols);  // Initialize with distance to the first centroid
         int closestCentroid = 0;
 
@@ -187,9 +191,49 @@ void assignClusters(double** data, double** centroids, int* assignments, int row
 
         // Assign the data point to the closest centroid
         assignments[i] = closestCentroid;
+
+        // Increment the size of the cluster
+        (*clusterSizes)[closestCentroid]++;
     }
+
+    // Step 2: Allocate memory for each cluster based on the number of points assigned to it
+    double*** clusters = (double***)malloc(k * sizeof(double**));  // Allocate array for each cluster
+
+    // Allocate memory for each cluster based on its size
+    for (int i = 0; i < k; i++) {
+        clusters[i] = (double**)malloc((*clusterSizes)[i] * sizeof(double*));
+        for (int j = 0; j < (*clusterSizes)[i]; j++) {
+            clusters[i][j] = (double*)malloc(cols * sizeof(double));  // Each point in the cluster has `cols` features
+        }
+    }
+
+    // Step 3: Re-assign data points to their respective clusters
+    int* clusterIndices = (int*)calloc(k, sizeof(int));  // Track where to place the next point in each cluster
+
+    for (int i = 0; i < rows; i++) {
+        int clusterID = assignments[i];
+        int index = clusterIndices[clusterID];  // Find the next index to place the data point in this cluster
+        for (int j = 0; j < cols; j++) {
+            clusters[clusterID][index][j] = data[i][j];  // Copy data point into the cluster
+        }
+        clusterIndices[clusterID]++;  // Increment the position for the next data point in this cluster
+    }
+
+    free(clusterIndices);  // Free temporary memory for tracking indices
+    return clusters;  // Return the array of clusters
 }
 
+// Function to free the 3D array of clusters
+void freeClusters(double*** clusters, int* clusterSizes, int k) {
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < clusterSizes[i]; j++) {
+            free(clusters[i][j]);  // Free each data point
+        }
+        free(clusters[i]);  // Free the cluster array
+    }
+    free(clusters);  // Free the outer array
+    free(clusterSizes);  // Free the array that stores the size of each cluster
+}
 
 // Function to free the matrix memory
 void freeMatrix(double** matrix, int rows) {
@@ -202,7 +246,7 @@ void freeMatrix(double** matrix, int rows) {
 int main() {
     int rows, cols, k;
 
-    // Read matrix from file
+    // Example data
     double** matrix = readMatrixFromFile("sample.txt", &rows, &cols);
 
     // Ask for the number of clusters
@@ -222,19 +266,31 @@ int main() {
     // Array to store cluster assignments (which centroid each point is closest to)
     int* assignments = (int*)malloc(rows * sizeof(int));
 
-    // Assign data points to the nearest centroid
-    assignClusters(matrix, centroids, assignments, rows, cols, k);
+    // Array to store the size of each cluster
+    int* clusterSizes = NULL;
 
-    // Output the cluster assignments
-    printf("Cluster assignments:\n");
-    for (int i = 0; i < rows; i++) {
-        printf("Data point %d is assigned to cluster %d\n", i + 1, assignments[i] + 1);  // Adding 1 for human-readable index
+    // Get the clusters
+    double*** clusters = assignClusters(matrix, centroids, assignments, rows, cols, k, &clusterSizes);
+
+    // Output the clusters
+    printf("Clusters:\n");
+    for (int i = 0; i < k; i++) {
+        printf("Cluster %d: \n", i + 1);
+        for (int j = 0; j < clusterSizes[i]; j++) {
+            printf("{ ");
+            for (int l = 0; l < cols; l++) {
+                printf("%lf", clusters[i][j][l]);
+                if (l < cols - 1) printf(", ");
+            }
+            printf(" }\n");
+        }
     }
 
     // Free allocated memory
     free(assignments);
     freeMatrix(centroids, k);  // Free centroids
     freeMatrix(matrix, rows);  // Free matrix
+    freeClusters(clusters, clusterSizes, k);  // Free clusters
 
     return 0;
 }
