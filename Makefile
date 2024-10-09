@@ -1,11 +1,11 @@
 kmeans: main.o kmeans.o
-	gcc -o kmeans main.o kmeans.o -lm
+	gcc -g -o kmeans main.o kmeans.o -lm
 
 main.o: main.c
-	gcc -c main.c
+	gcc -g -c main.c
 
 kmeans.o: kmeans.c
-	gcc -c kmeans.c
+	gcc -g -c kmeans.c
 
 clean:
 	rm -f *.o kmeans
