@@ -464,7 +464,7 @@ int main() {
     scanf("%d", &k);
 
     // Validate that k is less than or equal to the number of rows
-    if (k > rows) {
+    if (k <= 1 ||k > rows) {
         printf("Error: The number of clusters cannot be greater than the number of data points.\n");
         freeMatrix(matrix, rows);
         return 1;
