@@ -230,8 +230,7 @@ void freeClusters(double*** clusters, int* clusterSizes, int k) {
 }
 
 // Core function to run the K-means clustering algorithm
-void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments) {
-    double** centroids = selectRandomCentroids(data, rows, cols, k);
+void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments, double** centroids) {
     double** oldCentroids = (double**)malloc(k * sizeof(double*));
     for (int i = 0; i < k; i++) {
         oldCentroids[i] = (double*)malloc(cols * sizeof(double));
@@ -267,5 +266,4 @@ void kmeansClustering(double** data, int rows, int cols, int k, double tolerance
         free(oldCentroids[i]);
     }
     free(oldCentroids);
-    freeMatrix(centroids, k);
 }
