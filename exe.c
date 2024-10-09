@@ -243,8 +243,55 @@ void freeMatrix(double** matrix, int rows) {
     free(matrix);
 }
 
+// Function to calculate the mean of each cluster
+void calculateClusterMeans(double*** clusters, double** centroids, int* clusterSizes, int k, int cols) {
+    // Loop through each cluster
+    for (int i = 0; i < k; i++) {
+        // Reset the centroid values to 0
+        for (int j = 0; j < cols; j++) {
+            centroids[i][j] = 0.0;
+        }
+
+        // If the cluster is empty, skip the mean calculation
+        if (clusterSizes[i] == 0) continue;
+
+        // Sum up the points in the cluster
+        for (int j = 0; j < clusterSizes[i]; j++) {
+            for (int l = 0; l < cols; l++) {
+                centroids[i][l] += clusters[i][j][l];  // Add each feature value to the centroid sum
+            }
+        }
+
+        // Divide by the number of points in the cluster to get the mean
+        for (int l = 0; l < cols; l++) {
+            centroids[i][l] /= clusterSizes[i];  // Calculate the mean for each feature
+        }
+
+        // Optionally, print the mean (new centroid) for each cluster
+        printf("New Centroid %d: (", i + 1);
+        for (int l = 0; l < cols; l++) {
+            printf("%lf", centroids[i][l]);
+            if (l < cols - 1) printf(", ");
+        }
+        printf(")\n");
+    }
+}
+
+int hasConverged(double** oldCentroids, double** newCentroids, int k, int cols, double tolerance) {
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (fabs(newCentroids[i][j] - oldCentroids[i][j]) > tolerance) {
+                return 0;  // Centroids have not converged
+            }
+        }
+    }
+    return 1;  // Centroids have converged
+}
+
+
 int main() {
     int rows, cols, k;
+    double tolerance = 0.0001;  // Set a small threshold for convergence
 
     // Example data
     double** matrix = readMatrixFromFile("sample.txt", &rows, &cols);
@@ -269,20 +316,55 @@ int main() {
     // Array to store the size of each cluster
     int* clusterSizes = NULL;
 
-    // Get the clusters
-    double*** clusters = assignClusters(matrix, centroids, assignments, rows, cols, k, &clusterSizes);
-
-    // Output the clusters
-    printf("Clusters:\n");
+    // Allocate memory for old centroids to track changes between iterations
+    double** oldCentroids = (double**)malloc(k * sizeof(double*));
     for (int i = 0; i < k; i++) {
-        printf("Cluster %d: \n", i + 1);
-        for (int j = 0; j < clusterSizes[i]; j++) {
-            printf("{ ");
-            for (int l = 0; l < cols; l++) {
-                printf("%lf", clusters[i][j][l]);
-                if (l < cols - 1) printf(", ");
+        oldCentroids[i] = (double*)malloc(cols * sizeof(double));
+    }
+
+    int converged = 0;  // Flag to indicate if centroids have converged
+    int maxIterations = 100;  // Set a maximum number of iterations to avoid infinite loop
+
+    for (int iter = 0; iter < maxIterations; iter++) {
+        printf("\nIteration %d:\n", iter + 1);
+
+        // Step 1: Copy the current centroids to oldCentroids
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < cols; j++) {
+                oldCentroids[i][j] = centroids[i][j];
             }
-            printf(" }\n");
+        }
+
+        // Step 2: Assign data points to clusters
+        double*** clusters = assignClusters(matrix, centroids, assignments, rows, cols, k, &clusterSizes);
+
+        // Print the clusters for the current iteration (optional)
+        printf("Clusters:\n");
+        for (int i = 0; i < k; i++) {
+            printf("Cluster %d: \n", i + 1);
+            for (int j = 0; j < clusterSizes[i]; j++) {
+                printf("{ ");
+                for (int l = 0; l < cols; l++) {
+                    printf("%lf", clusters[i][j][l]);
+                    if (l < cols - 1) printf(", ");
+                }
+                printf(" }\n");
+            }
+        }
+
+        // Step 3: Calculate the new centroids
+        calculateClusterMeans(clusters, centroids, clusterSizes, k, cols);
+
+        // Step 4: Check for convergence
+        converged = hasConverged(oldCentroids, centroids, k, cols, tolerance);
+
+        // Step 5: Free the old clusters before the next iteration
+        freeClusters(clusters, clusterSizes, k);
+
+        // If converged, break the loop
+        if (converged) {
+            printf("Converged after %d iterations.\n", iter + 1);
+            break;
         }
     }
 
@@ -290,8 +372,12 @@ int main() {
     free(assignments);
     freeMatrix(centroids, k);  // Free centroids
     freeMatrix(matrix, rows);  // Free matrix
-    freeClusters(clusters, clusterSizes, k);  // Free clusters
+    for (int i = 0; i < k; i++) {
+        free(oldCentroids[i]);
+    }
+    free(oldCentroids);
 
     return 0;
 }
+
 
