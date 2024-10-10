@@ -3,15 +3,10 @@
 
 // Function prototypes
 double** readMatrixFromFile(const char* filename, int* rows, int* cols);
-double euclideanDistance(double* point, double* centroid, int cols);
-double** selectRandomCentroids(double** data, int rows, int cols, int k);
-double*** assignClusters(double** data, double** centroids, int* assignments, int rows, int cols, int k, int** clusterSizes);
-void calculateClusterMeans(double*** clusters, double** centroids, int* clusterSizes, int k, int cols);
 void freeMatrix(double** matrix, int rows);
-int hasConverged(double** oldCentroids, double** newCentroids, int k, int cols, double tolerance);
-void writeClusteredData(const char* filename, double** data, int* assignments, int rows, int cols);
-// void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments);
+double** selectRandomCentroids(double** data, int rows, int cols, int k);
 void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments, double** centroids);
+void writeClusteredFile(const char* filename, double** data, int* assignments, int rows, int cols);
 
 
 int main() {
@@ -22,30 +17,36 @@ int main() {
     double** matrix = readMatrixFromFile("kmeans-data.txt", &rows, &cols);
 
     // Ask for the number of clusters
-    printf("Provide number of clusters: ");
-    scanf("%d", &k);
-
-    // Validate that k is greater than 1 and less than the number of rows
-    if (k <= 1 || k > rows) {
-        printf("Error: The number of clusters cannot be greater than the number of data points.\n");
-        freeMatrix(matrix, rows);  // Free the matrix in case of error
-        return 1;
+   do {
+    printf("Provide number of clusters (must be greater than 1 and less than or equal to the number of data points): ");
+    if (scanf("%d", &k) != 1) { // Check if input is a valid integer
+        printf("Error: Invalid input. Please enter an integer value.\n");
+        while (getchar() != '\n'); // Clear the input buffer
+        continue; // Re-prompt for input
     }
 
+    if (k <= 1 || k > rows) {
+        printf("Error: The number of clusters must be greater than 1 and less than or equal to the number of data points.\n");
+    }
+    } while (k <= 1 || k > rows);
+
+
+    double** centroids = NULL;
     // Ask user how to initialize centroids
+    do {
+    // Prompt user for choice
     printf("Choose centroid initialization method:\n");
-    printf("1. Enter centroids manually\n");
-    printf("2. Randomly select centroids\n");
-    printf("Enter your choice (1 or 2): ");
+    printf("1. Randomly select centroids\n");
+    printf("2. Enter centroids manually\n");
+    printf("3. Exit\n");
+    printf("Enter your choice (1, 2, or 3): ");
     scanf("%d", &choice);
 
-    // Allocate memory for centroids
-    double** centroids;
-    
-    // Handle random or manual input of centroids
-    if (choice == 2) {
+    // Handle valid choices
+    if (choice == 1) {
         centroids = selectRandomCentroids(matrix, rows, cols, k);
-    } else if (choice == 1) {
+        break;  // Exit the loop after handling valid input
+    } else if (choice == 2) {
         centroids = (double**)malloc(k * sizeof(double*));
         for (int i = 0; i < k; i++) {
             centroids[i] = (double*)malloc(cols * sizeof(double));
@@ -54,18 +55,24 @@ int main() {
                 scanf("%lf", &centroids[i][j]);
             }
         }
+        break;  // Exit the loop after handling valid input
+    } else if (choice == 3) {
+        // Exit the program
+        printf("Exiting the program.\n");
+        freeMatrix(matrix, rows); // Clean up any dynamically allocated memory (if necessary)
+        return 0; // Exit the program
     } else {
-        printf("Invalid choice\n");
-        freeMatrix(matrix, rows);
-        return 1;
+        // Invalid choice
+        printf("Invalid choice. Please enter 1, 2, or 3.\n");
     }
+    } while (choice != 3);
 
     // Apply K-means algorithm
     int* assignments = (int*)malloc(rows * sizeof(int));  // Array to store cluster assignments
     kmeansClustering(matrix, rows, cols, k, tolerance, assignments, centroids);
 
     // Write the clustered data to a file
-    writeClusteredData("clustered_data.txt", matrix, assignments, rows, cols);
+    writeClusteredFile("clustered_data.txt", matrix, assignments, rows, cols);
 
     // Free allocated memory
     free(assignments);

@@ -43,7 +43,7 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
     for (int i = 0; i < *rows; i++) {
         matrix[i] = (double*)malloc(*cols * sizeof(double));
     }
-
+    // Read Matrix Data from the File
     for (int i = 0; i < *rows; i++) {
         for (int j = 0; j < *cols; j++) {
             fscanf(file, "%lf", &matrix[i][j]);
@@ -55,10 +55,10 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
 }
 
 // Function to calculate the Euclidean distance between two points
-double euclideanDistance(double* point, double* centroid, int cols) {
+double euclideanDistance(double* point1, double* point2, int cols) {
     double sum = 0.0;
     for (int i = 0; i < cols; i++) {
-        sum += (point[i] - centroid[i]) * (point[i] - centroid[i]);
+        sum += (point1[i] - point2[i]) * (point1[i] - point2[i]);
     }
     return sqrt(sum);
 }
@@ -194,7 +194,7 @@ int hasConverged(double** oldCentroids, double** newCentroids, int k, int cols, 
 }
 
 // Function to write clustered data to a file
-void writeClusteredData(const char* filename, double** data, int* assignments, int rows, int cols) {
+void writeClusteredFile(const char* filename, double** data, int* assignments, int rows, int cols) {
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
         perror("Error opening file for writing results");
