@@ -171,6 +171,7 @@ void calculateClusterMeans(double*** clusters, double** centroids, int* clusterS
         }
         printf(")\n");
     }
+        printf("\n");
 }
 
 // Function to free the 2D matrix

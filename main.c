@@ -8,6 +8,7 @@ void freeMatrix(double** matrix, int rows);
 double** selectRandomCentroids(double** data, int rows, int cols, int k);
 void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments, double** centroids);
 void writeClusteredFile(const char* filename, double** data, int* assignments, int rows, int cols);
+bool areCentroidsEqual(double* centroid1, double* centroid2, int cols);
 
 // Function to compare two centroids to see if they are equal
 bool areCentroidsEqual(double* centroid1, double* centroid2, int cols) {
@@ -22,9 +23,45 @@ bool areCentroidsEqual(double* centroid1, double* centroid2, int cols) {
 int main() {
     int rows, cols, k, choice;
     double tolerance = 0.0001;
+    char* filename = NULL;  // Pointer to hold the file name
+    bool validChoice = false;
 
-    // Read the data from the file using a function from kmeans.c
-    double** matrix = readMatrixFromFile("kmeans-data.txt", &rows, &cols);
+    // Continuously prompt the user until a valid choice is made or they exit
+    do {
+        // Display the menu for dataset selection
+        printf("Select the dataset to use:\n");
+        printf("1. kmeans-data.txt\n");
+        printf("2. small-data.txt\n");
+        printf("3. large-data.txt\n");
+        printf("4. Exit\n");
+        printf("Enter your choice (1, 2, 3, or 4): ");
+        scanf("%d", &choice);
+
+        // Set the filename based on user selection or handle invalid choices
+        switch (choice) {
+            case 1:
+                filename = "kmeans-data.txt";
+                validChoice = true;  // Valid choice, break the loop
+                break;
+            case 2:
+                filename = "small-data.txt";
+                validChoice = true;  // Valid choice, break the loop
+                break;
+            case 3:
+                filename = "another-data.txt";
+                validChoice = true;  // Valid choice, break the loop
+                break;
+            case 4:
+                printf("Exiting the program.\n");
+                return 0;  // Exit the program
+            default:
+                printf("Invalid choice. Please enter 1, 2, 3, or 4.\n");
+                break;
+        }
+    } while (!validChoice);
+
+    // Read the data from the selected file
+    double** matrix = readMatrixFromFile(filename, &rows, &cols);
 
     // Ask for the number of clusters
     do {
@@ -39,7 +76,6 @@ int main() {
             printf("Error: The number of clusters must be greater than 1 and less than or equal to the number of data points.\n");
         }
     } while (k <= 1 || k > rows);
-
 
     double** centroids = NULL;
     // Ask user how to initialize centroids
