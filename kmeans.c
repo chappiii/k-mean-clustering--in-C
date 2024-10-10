@@ -237,7 +237,7 @@ void kmeansClustering(double** data, int rows, int cols, int k, double tolerance
     }
 
     int maxIterations = 100;
-    int converged = 0;
+    // int converged = 0;
     for (int iter = 0; iter < maxIterations; iter++) {
         // Copy centroids to oldCentroids
         for (int i = 0; i < k; i++) {
@@ -253,7 +253,7 @@ void kmeansClustering(double** data, int rows, int cols, int k, double tolerance
 
         // Check for convergence
         if (hasConverged(oldCentroids, centroids, k, cols, tolerance)) {
-            converged = 1;
+            // converged = 1;
             freeClusters(clusters, clusterSizes, k);
             break;
         }
