@@ -48,7 +48,7 @@ int main() {
                 validChoice = true;  // Valid choice, break the loop
                 break;
             case 3:
-                filename = "another-data.txt";
+                filename = "large-data.txt";
                 validChoice = true;  // Valid choice, break the loop
                 break;
             case 4:

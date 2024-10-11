@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h> 
+#include <math.h>
 
 // Function to read the matrix from a file
 double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
@@ -11,6 +11,16 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
+
+    // Check if the file is empty
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    if (file_size == 0) {
+        fprintf(stderr, "Error: File is empty.\n");
+        fclose(file);
+        exit(EXIT_FAILURE);
+    }
+    rewind(file);  // Reset file pointer to the beginning after checking size
 
     *rows = 0;
     *cols = 0;
@@ -21,10 +31,12 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
     // Count the number of rows and columns
     while ((ch = fgetc(file)) != EOF) {
         if (ch == '\n') {
-            (*rows)++;
-            if (countingCols) {
-                (*cols) = temp_cols + 1;
-                countingCols = 0;
+            if (temp_cols > 0) {  // Only increment row count if the line is not empty
+                (*rows)++;
+                if (countingCols) {
+                    (*cols) = temp_cols + 1;
+                    countingCols = 0;
+                }
             }
             temp_cols = 0;
         } else if (ch == ' ' || ch == '\t') {
@@ -32,27 +44,38 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
         }
     }
 
-    if (ch != '\n') {
+    // Handle case where file doesn't end with a newline
+    if (temp_cols > 0) {
         (*rows)++;
     }
 
     rewind(file);
 
-    // Allocate memory for the matrix
-    double** matrix = (double**)malloc(*rows * sizeof(double*));
+    // Allocate memory for the matrix and initialize to 0
+    double** matrix = (double**)calloc(*rows, sizeof(double*));
     for (int i = 0; i < *rows; i++) {
-        matrix[i] = (double*)malloc(*cols * sizeof(double));
+        matrix[i] = (double*)calloc(*cols, sizeof(double));
     }
+
     // Read Matrix Data from the File
     for (int i = 0; i < *rows; i++) {
         for (int j = 0; j < *cols; j++) {
-            fscanf(file, "%lf", &matrix[i][j]);
+            int result = fscanf(file, "%lf", &matrix[i][j]);
+
+            // Handle empty or invalid lines
+            if (result != 1) {
+                fprintf(stderr, "Error reading value at row %d, col %d. Invalid input or empty line encountered.\n", i, j);
+                fclose(file);
+                exit(EXIT_FAILURE);  // Exit with error if fscanf fails
+            }
         }
     }
 
     fclose(file);
     return matrix;
 }
+
+
 
 // Function to calculate the Euclidean distance between two points
 double euclideanDistance(double* point1, double* point2, int cols) {
@@ -81,7 +104,7 @@ double** selectRandomCentroids(double** data, int rows, int cols, int k) {
             centroids[i][j] = data[randomIndex][j];
         }
     }
-    
+
     free(selected);
     return centroids;
 }
@@ -171,7 +194,6 @@ void calculateClusterMeans(double*** clusters, double** centroids, int* clusterS
         }
         printf(")\n");
     }
-        printf("\n");
 }
 
 // Function to free the 2D matrix
