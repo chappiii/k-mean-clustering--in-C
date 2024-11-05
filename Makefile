@@ -25,7 +25,7 @@ clean:
 # Target to run the program with Valgrind to check for memory leaks
 # Usage: Run `make valgrind` to execute the program with Valgrind
 valgrind: kmeans
-	valgrind --leak-check=full ./kmeans
+	time valgrind --leak-check=full ./kmeans
 
 # Target to run the program with gdb for debugging
 # Usage: Run `make debug` to execute the program in gdb
