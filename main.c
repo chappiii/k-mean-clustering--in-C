@@ -35,7 +35,15 @@ int main() {
         printf("3. large-data.txt\n");
         printf("4. Exit\n");
         printf("Enter your choice (1, 2, 3, or 4): ");
-        scanf("%d", &choice);
+
+        // Check if input is a valid integer
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Please enter a numeric choice (1, 2, 3, or 4).\n");
+
+            // Clear the input buffer
+            while (getchar() != '\n');  // Discard invalid input
+            continue;  // Prompt the user again
+        }
 
         // Set the filename based on user selection or handle invalid choices
         switch (choice) {
@@ -57,7 +65,7 @@ int main() {
             default:
                 printf("Invalid choice. Please enter 1, 2, 3, or 4.\n");
                 break;
-        }
+            }
     } while (!validChoice);
 
     // Read the data from the selected file
@@ -72,12 +80,13 @@ int main() {
             continue; // Re-prompt for input
         }
 
-        if (k <= 1 || k > rows) {
+        if (k < 1 || k > rows) {
             printf("Error: The number of clusters must be greater than 1 and less than or equal to the number of data points.\n");
         }
-    } while (k <= 1 || k > rows);
+    } while (k < 1 || k > rows);
 
     double** centroids = NULL;
+
     // Ask user how to initialize centroids
     do {
         // Prompt user for choice
@@ -86,7 +95,15 @@ int main() {
         printf("2. Enter centroids manually\n");
         printf("3. Exit\n");
         printf("Enter your choice (1, 2, or 3): ");
-        scanf("%d", &choice);
+
+        // Check if input is a valid integer
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Please enter a numeric choice (1, 2, or 3).\n");
+
+            // Clear the input buffer
+            while (getchar() != '\n');  // Discard invalid input
+            continue;  // Prompt the user again
+        }
 
         // Handle valid choices
         if (choice == 1) {
@@ -128,6 +145,7 @@ int main() {
             printf("Invalid choice. Please enter 1, 2, or 3.\n");
         }
     } while (choice != 3);
+
 
     // Apply K-means algorithm
     int* assignments = (int*)malloc(rows * sizeof(int));  // Array to store cluster assignments

@@ -1,22 +1,6 @@
 Your implementation of the K-means clustering algorithm in C appears to be well-structured and functional. However, there are a few areas where improvements can be made, and some potential issues to consider.
 
 Potential Issues and Improvements:
-1. Error Handling for Memory Allocation:
-Whenever you use malloc, it's good practice to check if the memory allocation was successful. If malloc fails, it returns NULL, which can lead to segmentation faults or undefined behavior if not handled properly.
-For example, you can modify the memory allocation lines as follows:
-
-c
-Copy code
-double** matrix = (double**)malloc(*rows * sizeof(double*));
-if (matrix == NULL) {
-    perror("Error allocating memory for matrix");
-    exit(EXIT_FAILURE);
-}
-Apply this pattern to all places where you allocate memory using malloc (e.g., for centroids, clusters, oldCentroids, etc.).
-
-2. Memory Leaks:
-You are correctly freeing memory in most parts of the code, but it’s important to ensure that every allocated memory block is freed. For instance, the freeMatrix() function correctly frees 2D arrays, but you might want to ensure that all dynamically allocated arrays are freed, especially when you return early or exit the program.
-Double-check all exit points in the program to ensure all allocated memory is freed before exiting, for example, if the user chooses to exit via option 3.
 
 3. Prevent Infinite Loop in Centroid Initialization:
 In the selectRandomCentroids() function, the logic prevents duplicate centroids by checking the selected array, which is good. However, in rare cases (such as when rows == k), it might end up in an infinite loop if all centroids have been selected and it continues trying to select new ones.
@@ -53,18 +37,7 @@ for (int i = 0; i < k; i++) {
     }
 }
 return (totalShift <= tolerance * tolerance);  // Compare squared values for efficiency
-7. User Input Validation:
-When prompting for input (e.g., number of clusters or tolerance), you should validate the input to ensure the user provides valid values. For example, k should be between 1 and the number of data points, and tolerance should be positive.
-Example validation:
 
-c
-Copy code
-do {
-    printf("Provide number of clusters: ");
-    scanf("%d", &k);
-} while (k <= 1 || k > rows);
-8. Handling Large Datasets:
-If you plan to handle larger datasets, you might want to consider more efficient memory management techniques, such as allocating memory in bulk and using block-based freeing rather than repeatedly allocating and freeing small chunks of memory.
 9. Performance Optimization:
 In the loop where you're calculating distances between data points and centroids, you're recalculating the entire Euclidean distance for each comparison. For large datasets, this can become a bottleneck. One possible optimization is to store precomputed values or optimize distance calculations based on certain assumptions (e.g., skipping computation if the distance is already greater than the minimum found so far).
 10. Code Readability and Modularization:
