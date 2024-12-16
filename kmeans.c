@@ -3,6 +3,9 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
+#define maxIterations 100
+
 
 // Function to read the matrix from a file
 double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
@@ -20,7 +23,7 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
         fclose(file);
         exit(EXIT_FAILURE);
     }
-    rewind(file);  // Reset file pointer to the beginning after checking size
+    rewind(file);
 
     *rows = 0;
     *cols = 0;
@@ -31,7 +34,7 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
     // Count the number of rows and columns
     while ((ch = fgetc(file)) != EOF) {
         if (ch == '\n') {
-            if (temp_cols > 0) {  // Only increment row count if the line is not empty
+            if (temp_cols > 0) {
                 (*rows)++;
                 if (countingCols) {
                     (*cols) = temp_cols + 1;
@@ -66,7 +69,7 @@ double** readMatrixFromFile(const char* filename, int* rows, int* cols) {
             if (result != 1) {
                 fprintf(stderr, "Error reading value at row %d, col %d. Invalid input or empty line encountered.\n", i, j);
                 fclose(file);
-                exit(EXIT_FAILURE);  // Exit with error if fscanf fails
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -84,9 +87,9 @@ double euclideanDistance(double* point1, double* point2, int cols) {
     return sqrt(sum);
 }
 
-// Function to initialize centroids randomly
+// Function to initialize centroids randomly from the data
 double** selectRandomCentroids(double** data, int rows, int cols, int k) {
-    srand(time(0));  // Initialize random seed
+    srand(time(0));
     double** centroids = (double**)malloc(k * sizeof(double*));
     int* selected = (int*)calloc(rows, sizeof(int));
 
@@ -108,14 +111,13 @@ double** selectRandomCentroids(double** data, int rows, int cols, int k) {
 }
 
 // Function to assign points to clusters
-
 void assignClusters(double** data, double** centroids, int* assignments, int rows, int cols, int k, double*** clusters, int* clusterSizes) {
     // Reset cluster sizes to zero at the start of each iteration
     for (int i = 0; i < k; i++) {
         clusterSizes[i] = 0;
     }
 
-    // Step 1: Assign each point to the nearest centroid
+    // Assign each point to the nearest centroid
     for (int i = 0; i < rows; i++) {
         double minDistance = euclideanDistance(data[i], centroids[0], cols);  // Initialize with distance to the first centroid
         int closestCentroid = 0;
@@ -133,9 +135,9 @@ void assignClusters(double** data, double** centroids, int* assignments, int row
         assignments[i] = closestCentroid;
 
         // Place the data point in the appropriate cluster
-        int index = clusterSizes[closestCentroid];  // Get the current size of the cluster
-        clusters[closestCentroid][index] = data[i];  // Directly assign the pointer to avoid copying data
-        clusterSizes[closestCentroid]++;  // Increment the size of the cluster
+        int index = clusterSizes[closestCentroid];
+        clusters[closestCentroid][index] = data[i];
+        clusterSizes[closestCentroid]++;
     }
 }
 
@@ -154,13 +156,13 @@ void calculateClusterMeans(double*** clusters, double** centroids, int* clusterS
         // Sum up the points in the cluster
         for (int j = 0; j < clusterSizes[i]; j++) {
             for (int l = 0; l < cols; l++) {
-                centroids[i][l] += clusters[i][j][l];  // Add each feature value to the centroid sum
+                centroids[i][l] += clusters[i][j][l];
             }
         }
 
         // Divide by the number of points in the cluster to get the mean
         for (int l = 0; l < cols; l++) {
-            centroids[i][l] /= clusterSizes[i];  // Calculate the mean for each feature
+            centroids[i][l] /= clusterSizes[i];
         }
     }
 }
@@ -178,11 +180,11 @@ int hasConverged(double** oldCentroids, double** newCentroids, int k, int cols, 
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < cols; j++) {
             if (fabs(newCentroids[i][j] - oldCentroids[i][j]) > tolerance) {
-                return 0;  // Centroids have not converged
+                return 0;
             }
         }
     }
-    return 1;  // Centroids have converged
+    return 1;
 }
 
 // Function to write clustered data to a file
@@ -193,16 +195,13 @@ void writeClusteredFile(const char* filename, double** data, int* assignments, i
         exit(EXIT_FAILURE);
     }
 
-    // Write the header
-    fprintf(file, "Data Point,Cluster Assignment\n");
-
     // Write each data point with its cluster assignment
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             fprintf(file, "%lf ", data[i][j]);
         }
         // Print the cluster assignment (add one to make it human-readable, 1-based index)
-        fprintf(file, "-> Cluster %d\n", assignments[i] + 1);
+        fprintf(file, " %d\n", assignments[i] + 1);
     }
 
     fclose(file);
@@ -213,52 +212,23 @@ void writeClusteredFile(const char* filename, double** data, int* assignments, i
 void freeClusters(double*** clusters, int* clusterSizes, int k) {
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < clusterSizes[i]; j++) {
-            free(clusters[i][j]);  // Free each data point
+            free(clusters[i][j]);
         }
-        free(clusters[i]);  // Free the cluster array
+        free(clusters[i]);
     }
-    free(clusters);  // Free the outer array
-    free(clusterSizes);  // Free the array that stores the size of each cluster
+    free(clusters);
+    free(clusterSizes);
 }
 
-// Core function to run the K-means clustering algorithm
-// void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments, double** centroids) {
-//     double** oldCentroids = (double**)malloc(k * sizeof(double*));
-//     for (int i = 0; i < k; i++) {
-//         oldCentroids[i] = (double*)malloc(cols * sizeof(double));
-//     }
-
-//     int maxIterations = 100;
-//     // int converged = 0;
-//     for (int iter = 0; iter < maxIterations; iter++) {
-//         // Copy centroids to oldCentroids
-//         for (int i = 0; i < k; i++) {
-//             for (int j = 0; j < cols; j++) {
-//                 oldCentroids[i][j] = centroids[i][j];
-//             }
-//         }
-
-//         // Assign clusters and calculate new centroids
-//         int* clusterSizes = NULL;
-//         double*** clusters = assignClusters(data, centroids, assignments, rows, cols, k, &clusterSizes);
-//         calculateClusterMeans(clusters, centroids, clusterSizes, k, cols);
-
-//         // Check for convergence
-//         if (hasConverged(oldCentroids, centroids, k, cols, tolerance)) {
-//             // converged = 1;
-//             freeClusters(clusters, clusterSizes, k);
-//             break;
-//         }
-
-//         // Free clusters for next iteration
-//         freeClusters(clusters, clusterSizes, k);
-//     }
-
-//     for (int i = 0; i < k; i++) {
-//         free(oldCentroids[i]);
-//     }
-//     free(oldCentroids);
-// }
+// Function to compare two centroids to see if they are equal
+bool areCentroidsEqual(double* centroid1, double* centroid2, int cols) {
+    for (int i = 0; i < cols; i++) {
+        if (centroid1[i] != centroid2[i]) {
+            return false;  // Centroids are different
+        }
+    }
+    return true;  // Centroids are equal
+}
 
 void kmeansClustering(double** data, int rows, int cols, int k, double tolerance, int* assignments, double** centroids) {
     double** oldCentroids = (double**)malloc(k * sizeof(double*));
@@ -266,14 +236,14 @@ void kmeansClustering(double** data, int rows, int cols, int k, double tolerance
         oldCentroids[i] = (double*)malloc(cols * sizeof(double));
     }
 
-    // Allocate memory for clusterSizes and clusters only once
+    // Allocate memory for clusterSizes and clusters
     int* clusterSizes = (int*)calloc(k, sizeof(int));
     double*** clusters = (double***)malloc(k * sizeof(double**));
     for (int i = 0; i < k; i++) {
-        clusters[i] = (double**)malloc(rows * sizeof(double*));  // Allocate enough space for each cluster
+        clusters[i] = (double**)malloc(rows * sizeof(double*));
     }
 
-    int maxIterations = 100;
+    // main loop
     for (int iter = 0; iter < maxIterations; iter++) {
         // Copy centroids to oldCentroids
         for (int i = 0; i < k; i++) {
@@ -282,10 +252,9 @@ void kmeansClustering(double** data, int rows, int cols, int k, double tolerance
             }
         }
 
-        // Assign clusters without reallocating memory
+        // Assign clusters
         assignClusters(data, centroids, assignments, rows, cols, k, clusters, clusterSizes);
-        // assignClusters(data, centroids, assignments, rows, cols, k, clusterSizes);
-        
+
         // Calculate new centroids
         calculateClusterMeans(clusters, centroids, clusterSizes, k, cols);
 
@@ -304,5 +273,3 @@ void kmeansClustering(double** data, int rows, int cols, int k, double tolerance
     free(clusterSizes);
     free(oldCentroids);
 }
-
-
