@@ -18,11 +18,11 @@ project_directory/
 ├── Makefile                # Automates compilation, linking, and debugging
 ├── README.md               # Documentation for the project
 ├── kmeans                  # Executable binary file
-├── kmeans-data.txt         # Input data file (10,000 data points included)
+├── kmeans-data.txt         # Input data file 
 ├── kmeans-output.txt       # Output file with clustering results
 ├── kmeans.c                # Source file containing K-means algorithm implementation
 ├── kmeans.o                # Object file for kmeans.c
-├── large-data.txt          # Additional large dataset file for testing
+├── large-data.txt          # Additional large dataset file for testing (10,000 data points included)
 ├── main.c                  # Source file containing main function
 └── main.o                  # Object file for main.c
 ```
